@@ -6,6 +6,7 @@
 #include "spinlock.h"
 #include "proc.h"
 
+
 uint64
 sys_exit(void)
 {
@@ -77,15 +78,35 @@ sys_kill(void)
   return kill(pid);
 }
 
-// return how many clock tick interrupts have occurred
-// since start.
-uint64
+// ----------------------------FUNCS FROM PDF--------------------------------
+// return how many clock tick interrupts have occurred since start.
+
+uint64 
 sys_uptime(void)
 {
   uint xticks;
-
   acquire(&tickslock);
   xticks = ticks;
   release(&tickslock);
   return xticks;
 }
+
+uint64 
+sys_waitStats(void)
+{
+  uint64 addr, addr1, addr2;
+  uint wtime=0, rtime=0;
+  argaddr(0, &addr);
+  argaddr(1, &addr1);
+  argaddr(2, &addr2);
+  int ret = waitStats(addr, &wtime, &rtime);
+  struct proc* p = myproc();
+  if (copyout(p->pagetable, addr1,(char*)&wtime, sizeof(int)) < 0)
+    return -1;
+  if (copyout(p->pagetable, addr2,(char*)&rtime, sizeof(int)) < 0)
+    return -1;
+  return ret;
+}
+
+
+// --------------------------------------------------------------------------

@@ -9,10 +9,15 @@
 struct spinlock tickslock;
 uint ticks;
 
+
+void updateTime(); // avoid implicit decl
+
+
 extern char trampoline[], uservec[], userret[];
 
 // in kernelvec.S, calls kerneltrap().
 void kernelvec();
+
 
 extern int devintr();
 
@@ -160,14 +165,24 @@ kerneltrap()
   w_sstatus(sstatus);
 }
 
+
+//--------------------------------------------------------------------------
+// In the clockintr() function, insert a call to the 
+// updateTime() function.  This must be done inside the 
+// lock, after the ticks variable has been updated.
+//--------------------------------------------------------------------------
 void
 clockintr()
 {
   acquire(&tickslock);
   ticks++;
+  updateTime(); 
   wakeup(&ticks);
+	
   release(&tickslock);
 }
+//--------------------------------------------------------------------------
+
 
 // check if it's an external interrupt or software interrupt,
 // and handle it.

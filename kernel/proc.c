@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 
+
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
@@ -14,6 +15,9 @@ struct proc *initproc;
 
 int nextpid = 1;
 struct spinlock pid_lock;
+
+
+
 
 extern void forkret(void);
 static void freeproc(struct proc *p);
@@ -42,7 +46,7 @@ proc_mapstacks(pagetable_t kpgtbl)
     kvmmap(kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
   }
 }
-
+    
 // initialize the proc table.
 void
 procinit(void)
@@ -106,10 +110,23 @@ allocpid()
 // If found, initialize state required to run in the kernel,
 // and return with p->lock held.
 // If there are no free procs, or a memory allocation fails, return 0.
+
+
+// In addition, the new variables added the process control block need to be initialized to 0 in the allocproc() function, except for the timeOfCreation which should be set to ticks.  Finally, the endTime variable must be set in the exit() function (to ticks) which represents the final ending time for that process.
+
+
+
+
+/* 
+In addition, the new variables added the process control block need to be initialized to 0 in the allocproc() function, except for the timeOfCreation which should be set to ticks.  Finally, the endTime variable must be set in the exit() function (to ticks) which represents the final ending time for that process.
+*/
 static struct proc*
 allocproc(void)
 {
+
   struct proc *p;
+
+	
 
   for(p = proc; p < &proc[NPROC]; p++) {
     acquire(&p->lock);
@@ -119,6 +136,12 @@ allocproc(void)
       release(&p->lock);
     }
   }
+    	p->timeOfCreation = ticks;
+  	p-> runTime =0;
+	p-> startTime =0;
+	p-> numScheduled =0;
+	p-> sleepTime =0;
+	p-> totalRunTime =0;	
   return 0;
 
 found:
@@ -145,6 +168,7 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
+
 
   return p;
 }
@@ -343,10 +367,18 @@ reparent(struct proc *p)
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait().
+
+
+/* 
+In addition, the new variables added the process control block need to be initialized to 0 in the allocproc() function, except for the timeOfCreation which should be set to ticks.  Finally, the endTime variable must be set in the exit() function (to ticks) which represents the final ending time for that process.
+*/
 void
 exit(int status)
 {
+
   struct proc *p = myproc();
+
+
 
   if(p == initproc)
     panic("init exiting");
@@ -383,6 +415,9 @@ exit(int status)
   // Jump into the scheduler, never to return.
   sched();
   panic("zombie exit");
+  
+  
+  	p->endTime = ticks;	
 }
 
 // Wait for a child process to exit and return its pid.
@@ -681,3 +716,61 @@ procdump(void)
     printf("\n");
   }
 }
+
+
+void updateTime() {
+  struct proc *p;
+  for (p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if (p->state == RUNNING) {
+      p->runTime++;
+      p->totalRunTime++;
+    }
+    if (p->state == SLEEPING)
+      p->sleepTime++;
+    release(&p->lock);
+  }
+}
+
+int waitStats(uint64 addr, uint* rtime, uint* wtime) {
+  struct proc *np;
+  int havekids, pid;
+  struct proc *p = myproc();
+  acquire(&wait_lock);
+  for(;;){
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for(np = proc; np < &proc[NPROC]; np++) {
+      if(np->parent == p){
+        // make sure the child isn't still in exit() or swtch().
+        acquire(&np->lock);
+        havekids = 1;
+        if(np->state == ZOMBIE) {
+                  // Found one.
+          pid = np->pid;
+          *rtime = np->totalRunTime;
+          *wtime = np->endTime - np->timeOfCreation - np->totalRunTime;
+          if(addr != 0 && copyout(p->pagetable, addr, (char *)&np->xstate,
+                                  sizeof(np->xstate)) < 0) {
+            release(&np->lock);
+            release(&wait_lock);
+            return -1;
+          }
+          freeproc(np);
+          release(&np->lock);
+          release(&wait_lock);
+          return pid;
+        }
+        release(&np->lock);
+      }
+    }
+    // No point waiting if we don't have any children.
+    if(!havekids || p->killed) {
+      release(&wait_lock);
+      return -1;
+    }
+    // Wait for a child to exit.
+    sleep(p, &wait_lock);  //DOC: wait-sleep
+  }
+}
+

@@ -22,6 +22,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+// Add the new syscall for waitStats() in a similar manner as before.
+int waitStats(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

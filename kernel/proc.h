@@ -41,6 +41,7 @@ extern struct cpu cpus[NCPU];
 // return-to-user path via usertrapret() doesn't return through
 // the entire kernel call stack.
 struct trapframe {
+
   /*   0 */ uint64 kernel_satp;   // kernel page table
   /*   8 */ uint64 kernel_sp;     // top of process's kernel stack
   /*  16 */ uint64 kernel_trap;   // usertrap()
@@ -83,6 +84,19 @@ enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
 struct proc {
+// --------------------------------------------------------------------------------------
+	// In order to track each process, 
+	// we will add some new variables into the process control block.
+	// These variables are as follows:
+	uint  timeOfCreation;
+	uint64  runTime;
+	uint64  startTime;
+	uint64  numScheduled;
+	uint64  sleepTime;
+	uint64  totalRunTime;
+	uint64  endTime;
+// --------------------------------------------------------------------------------------
+
   struct spinlock lock;
 
   // p->lock must be held when using these:
