@@ -79,6 +79,11 @@ argstr(int n, char *buf, int max)
   return fetchstr(addr, buf, max);
 }
 
+// project 2 :
+extern uint64 sys_getmem(void); 
+extern uint64 sys_getstate(void); 
+extern uint64 sys_getparentpid(void); 
+extern uint64 sys_getkstack(void); 
 // Prototypes for the functions that handle system calls.
 extern uint64 sys_fork(void);
 extern uint64 sys_exit(void);
@@ -105,6 +110,12 @@ extern uint64 sys_close(void);
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
 static uint64 (*syscalls[])(void) = {
+    // project 2:
+[SYS_getmem]    sys_getmem,
+[SYS_getstate]    sys_getstate,
+[SYS_getparentpid]    sys_getparentpid,
+[SYS_getkstack]    sys_getkstack,
+
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
 [SYS_wait]    sys_wait,

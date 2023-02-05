@@ -36,3 +36,8 @@ entry("getpid");
 entry("sbrk");
 entry("sleep");
 entry("uptime");
+# project2 syscalls:
+entry("getmem"); 
+entry("getstate"); 
+entry("getparentpid"); 
+entry("getkstack"); 

@@ -6,6 +6,41 @@
 #include "spinlock.h"
 #include "proc.h"
 
+// ACTION:  Edit  sysproc.c  to add a function for the new system calls.  
+// Do not overthink these functions. You should look at the other system 
+// calls definitions to derive your solution.
+
+// Returns memory size of the calling process
+uint64
+sys_getmem(void)
+{
+	return myproc()->sz;
+}
+
+// Returns the current state (SLEEPING, RUNNING, or RUNNABLE) of the calling processes.
+// hint is look at sys_getpid it is linked to proc.h
+uint64
+sys_getstate(void)
+{
+  return myproc()->state;
+}
+
+// Returns process identification (PID) of the calling process’s parent.
+// For getparentpid, it is creating another struct proc so u go into parent then its pid
+uint64
+sys_getparentpid(void)
+{
+  return myproc()->parent-> pid;
+
+}
+
+// Returns address of kernel stack.
+uint64
+sys_getkstack(void)
+{
+	return myproc() -> kstack;
+}
+// ------------------------------------------------------------------------
 uint64
 sys_exit(void)
 {

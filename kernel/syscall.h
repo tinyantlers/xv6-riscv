@@ -20,3 +20,8 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
+// project 2:
+#define SYS_getmem  22
+#define SYS_getstate  23
+#define SYS_getparentpid  24
+#define SYS_getkstack  25
